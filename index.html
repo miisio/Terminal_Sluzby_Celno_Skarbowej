@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terminal Służby Celno‑Skarbowej | Summer RP</title>
+<link rel="icon" href="https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/Emblem_of_Poland.svg/1200px-Emblem_of_Poland.svg.png">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+body {
+    font-family: 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #0f1115, #21212c);
+    color: #eee;
+    margin: 0;
+    padding: 40px 0 0;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+}
+
+.panel {
+    width: 100%;
+    max-width: 900px;
+    background: #1e1e2b;
+    border-radius: 16px;
+    padding: 30px 40px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+    border: 1px solid #333;
+}
+
+h1 {
+    text-align: center;
+    font-size: 2em;
+    font-weight: 700;
+    color: #ff9f1c;
+    text-shadow: 0 0 10px rgba(255,159,28,0.4);
+    margin-bottom: 25px;
+}
+
+.tabs {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    background: #2c2c3f;
+    padding: 12px 24px;
+    border-radius: 12px;
+    color: #ccc;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.tab-btn.active {
+    background: #ff9f1c;
+    color: #1e1e2b;
+    box-shadow: 0 0 12px rgba(255,159,28,0.5);
+}
+
+.tab { display: none; }
+.tab.active { display: block; animation: fade .3s ease; }
+@keyframes fade { from{opacity:0;} to{opacity:1;} }
+
+label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: 500; }
+input, textarea, select {
+    width: 100%;
+    background: #2f2f44;
+    color: #eee;
+    border: 1px solid #444;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 1em;
+    outline: none;
+    transition: 0.2s;
+}
+input:focus, textarea:focus { border-color: #ff9f1c; }
+textarea { min-height: 120px; resize: vertical; }
+
+button.send {
+    width: 100%;
+    margin-top: 20px;
+    background: #ff9f1c;
+    border: none;
+    padding: 14px;
+    border-radius: 12px;
+    color: #1e1e2b;
+    font-size: 1.05em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: 0.3s;
+}
+button.send:hover { background: #ffaa33; transform: translateY(-2px); }
+
+.status { margin-top: 15px; text-align: center; font-weight: 600; padding: 10px; border-radius: 10px; }
+.ok { background: #1e3d28; color: #6fff92; }
+.err { background: #3d1e1e; color: #ff6b6b; }
+</style>
+</head>
+<body>
+<div class="panel">
+<h1>Terminal Służby Celno‑Skarbowej</h1>
+<div class="tabs">
+<button class="tab-btn active" onclick="openTab('mandat', event)">Mandat Skarbowy</button>
+<button class="tab-btn" onclick="openTab('wniosek', event)">Wniosek do Sądu</button>
+<button class="tab-btn" onclick="openTab('celny', event)">Raport Celny</button>
+<button class="tab-btn" onclick="openTab('skarbowy', event)">Raport Skarbowy</button>
+</div>
+
+<!-- Mandat -->
+<div id="mandat" class="tab active">
+<form id="mandatForm">
+<label>Imię i nazwisko ukaranego:</label><input type="text" id="imieMandat" required>
+<label>Nick (OOC):</label><input type="text" id="nickMandat" required>
+<label>Data i godzina wystawienia:</label><input type="datetime-local" id="dataMandat" required>
+<label>Miejsce zdarzenia:</label><input type="text" id="miejsceMandat" required>
+<label>Powód nałożenia mandatu:</label><textarea id="powodMandat"></textarea>
+<label>Kwota mandatu (PLN):</label><input type="number" id="kwotaMandat" min="1" required>
+<label>Funkcjonariusz:</label><input type="text" id="funkMandat" required>
+<button class="send" type="button" onclick="sendMandat()">Wyślij mandat</button>
+</form>
+<div id="statusMandat" class="status"></div>
+</div>
+
+<!-- Wniosek -->
+<div id="wniosek" class="tab">
+<form id="wniosekForm">
+<label>Imię i nazwisko ukaranego:</label><input type="text" id="imieWniosek" required>
+<label>Nick (OOC):</label><input type="text" id="nickWniosek" required>
+<label>Data wystawienia mandatu:</label><input type="datetime-local" id="dataWniosek" required>
+<label>Powód mandatu:</label><textarea id="powodWniosekMandat"></textarea>
+<label>Kwota mandatu (PLN):</label><input type="number" id="kwotaWniosek" min="1" required>
+<label>Opis sprawy / powód wniosku:</label><textarea id="opisWniosek"></textarea>
+<label>Funkcjonariusz:</label><input type="text" id="funkWniosek" required>
+<button class="send" type="button" onclick="sendWniosek()">Wyślij wniosek</button>
+</form>
+<div id="statusWniosek" class="status"></div>
+</div>
+
+<!-- Raport Celny -->
+<div id="celny" class="tab">
+<form id="celnyForm">
+<label>Data i godzina:</label><input type="datetime-local" id="dataCelny">
+<label>Miejsce:</label><input type="text" id="miejsceCelny">
+<label>Zatrzymane osoby (jeśli dotyczy):</label><textarea id="osobyCelny"></textarea>
+<label>Dowody zabezpieczone:</label><textarea id="dowodyCelny"></textarea>
+<label>Uwagi końcowe:</label><textarea id="uwagiCelny"></textarea>
+<label>Raport sporządził:</label><input type="text" id="funkCelny">
+<button class="send" type="button" onclick="sendCelny()">Wyślij raport celny</button>
+</form>
+<div id="statusCelny" class="status"></div>
+</div>
+
+<!-- Raport Skarbowy -->
+<div id="skarbowy" class="tab">
+<form id="skarbowyForm">
+<label>Data i godzina:</label><input type="datetime-local" id="dataSkarbowy">
+<label>Miejsce:</label><input type="text" id="miejsceSkarbowy">
+<label>Zatrzymane osoby (jeśli dotyczy):</label><textarea id="osobySkarbowy"></textarea>
+<label>Dowody zabezpieczone:</label><textarea id="dowodySkarbowy"></textarea>
+<label>Uwagi końcowe:</label><textarea id="uwagiSkarbowy"></textarea>
+<label>Raport sporządził:</label><input type="text" id="funkSkarbowy">
+<button class="send" type="button" onclick="sendSkarbowy()">Wyślij raport skarbowy</button>
+</form>
+<div id="statusSkarbowy" class="status"></div>
+</div>
+</div>
+
+<script>
+// Tabs
+function openTab(id, e){
+    document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    e.target.classList.add('active');
+}
+
+// Webhooky
+const WEBHOOK_MANDAT = 'https://discord.com/api/webhooks/1439643060811202620/jX1Y0QmA61GZ1-Ngz8oMLCyZisE_0SEMOpmGW8vcuslRbZaokIdBTKQMSbi4H1KHiZXM';
+const WEBHOOK_WNIOSEK = 'https://discord.com/api/webhooks/1439643060811202620/jX1Y0QmA61GZ1-Ngz8oMLCyZisE_0SEMOpmGW8vcuslRbZaokIdBTKQMSbi4H1KHiZXM';
+const WEBHOOK_CELNY = 'https://discord.com/api/webhooks/1439643060811202620/jX1Y0QmA61GZ1-Ngz8oMLCyZisE_0SEMOpmGW8vcuslRbZaokIdBTKQMSbi4H1KHiZXM';
+const WEBHOOK_SKARBOWY = 'https://discord.com/api/webhooks/1439643060811202620/jX1Y0QmA61GZ1-Ngz8oMLCyZisE_0SEMOpmGW8vcuslRbZaokIdBTKQMSbi4H1KHiZXM';
+
+// Funkcja wysyłki embedów
+async function sendToWebhook(webhook, content, statusElem){
+    try {
+        let res = await fetch(webhook, {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify(content)
+        });
+        if(res.ok){
+            statusElem.textContent = 'Wysłano pomyślnie!';
+            statusElem.className='status ok';
+        } else {
+            throw new Error('Błąd wysyłki');
+        }
+    } catch(e){
+        statusElem.textContent = 'Błąd wysyłki!';
+        statusElem.className='status err';
+        console.error(e);
+    }
+}
+
+// Mandat
+function sendMandat(){
+    const embed = {
+        title: "🧾 Mandat Skarbowy",
+        description: "Służba Celno‑Skarbowa – Summer RP",
+        color: 0xFF9F1C,
+        fields: [
+            { name: "Dane osoby ukaranej", value: `Imię i nazwisko: ${document.getElementById('imieMandat').value}\nNick (OOC): ${document.getElementById('nickMandat').value}` },
+            { name: "Informacje o zdarzeniu", value: `Data i godzina: ${document.getElementById('dataMandat').value}\nMiejsce: ${document.getElementById('miejsceMandat').value}` },
+            { name: "Powód mandatu", value: document.getElementById('powodMandat').value || "Brak" },
+            { name: "Wymiar kary", value: `Kwota: ${document.getElementById('kwotaMandat').value} PLN` },
+            { name: "Funkcjonariusz wystawiający", value: document.getElementById('funkMandat').value }
+        ],
+        footer: { text: "⚠️ Mandat należy uiścić w terminie 7 dni. Brak zapłaty skutkuje wszczęciem postępowania." },
+        timestamp: new Date()
+    };
+    sendToWebhook(WEBHOOK_MANDAT, { embeds: [embed] }, document.getElementById('statusMandat'));
+}
+
+// Wniosek do sądu
+function sendWniosek(){
+    const embed = {
+        title: "📄 Wniosek do Sądu",
+        color: 0xFF9F1C,
+        fields: [
+            { name: "Dane osoby ukaranej", value: `Imię i nazwisko: ${document.getElementById('imieWniosek').value}\nNick (OOC): ${document.getElementById('nickWniosek').value}` },
+            { name: "Data wystawienia mandatu", value: document.getElementById('dataWniosek').value },
+            { name: "Powód mandatu", value: document.getElementById('powodWniosekMandat').value || "Brak" },
+            { name: "Kwota mandatu (PLN)", value: document.getElementById('kwotaWniosek').value },
+            { name: "Opis sprawy / powód wniosku", value: document.getElementById('opisWniosek').value || "Brak" },
+            { name: "Funkcjonariusz", value: document.getElementById('funkWniosek').value }
+        ],
+        timestamp: new Date()
+    };
+    sendToWebhook(WEBHOOK_WNIOSEK, { embeds: [embed] }, document.getElementById('statusWniosek'));
+}
+
+// Raport Celny
+function sendCelny(){
+    const embed = {
+        title: "📋 Raport Celny",
+        color: 0xFF9F1C,
+        fields: [
+            { name: "Data i godzina", value: document.getElementById('dataCelny').value },
+            { name: "Miejsce", value: document.getElementById('miejsceCelny').value },
+            { name: "Zatrzymane osoby", value: document.getElementById('osobyCelny').value || "Brak" },
+            { name: "Dowody zabezpieczone", value: document.getElementById('dowodyCelny').value || "Brak" },
+            { name: "Uwagi końcowe", value: document.getElementById('uwagiCelny').value || "Brak" },
+            { name: "Raport sporządził", value: document.getElementById('funkCelny').value }
+        ],
+        timestamp: new Date()
+    };
+    sendToWebhook(WEBHOOK_CELNY, { embeds: [embed] }, document.getElementById('statusCelny'));
+}
+
+// Raport Skarbowy
+function sendSkarbowy(){
+    const embed = {
+        title: "📋 Raport Skarbowy",
+        color: 0xFF9F1C,
+        fields: [
+            { name: "Data i godzina", value: document.getElementById('dataSkarbowy').value },
+            { name: "Miejsce", value: document.getElementById('miejsceSkarbowy').value },
+            { name: "Zatrzymane osoby", value: document.getElementById('osobySkarbowy').value || "Brak" },
+            { name: "Dowody zabezpieczone", value: document.getElementById('dowodySkarbowy').value || "Brak" },
+            { name: "Uwagi końcowe", value: document.getElementById('uwagiSkarbowy').value || "Brak" },
+            { name: "Raport sporządził", value: document.getElementById('funkSkarbowy').value }
+        ],
+        timestamp: new Date()
+    };
+    sendToWebhook(WEBHOOK_SKARBOWY, { embeds: [embed] }, document.getElementById('statusSkarbowy'));
+}
+</script>
+</body>
+</html>
